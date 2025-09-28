@@ -419,17 +419,7 @@ function validateInput(key, currentGuess) {
 // DEBUGGING HELPERS (REMOVE BEFORE SUBMISSION)
 // ========================================
 
-// Uncomment these lines for debugging help:
-// console.log('Current word:', currentWord);
-// console.log('Current guess:', currentGuess);
-// console.log('Current row:', currentRow);
-// Debug helper (REMOVE before submission)
-//window.debug = window.debug || {};
-//window.debug.setWord = (w) => { 
-//    initializeGame(); 
-//    currentWord = w.toUpperCase(); 
-//   console.log('Target set to:', currentWord); 
-//};
+
 
 
 
