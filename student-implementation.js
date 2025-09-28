@@ -222,8 +222,34 @@ function checkLetter(guessLetter, position, targetWord) {
     // This is the most challenging part - you may want to implement
     // a more sophisticated algorithm that processes the entire word
     
-    console.log('Checking letter:', guessLetter, 'at position:', position); // Remove this line
-    return 'absent'; // Replace with actual logic
+    const letter = guessLetter.toUpperCase();
+    const target = targetWord.toUpperCase();
+
+    if (target[position] === letter) return 'correct';
+
+
+    const guess = getCurrentGuess(); 
+    const remaining = {};
+
+    for (let i = 0; i < WORD_LENGTH; i++) {
+        const t = target[i];
+        const g = guess[i];
+        if (t !== g) {
+            remaining[t] = (remaining[t] || 0) + 1;
+        }
+    }
+
+
+    for (let i = 0; i < position; i++) {
+        const g = guess[i];
+        if (g === letter && target[i] !== g && remaining[letter] > 0) {
+            remaining[letter]--;
+        }
+    }
+
+    if ((remaining[letter] || 0) > 0) return 'present';
+    return 'absent';
+
 }
 
 /**
@@ -268,7 +294,23 @@ function updateKeyboardColors(guess, results) {
     // HINT: Don't change green keys to yellow or gray
     // HINT: Don't change yellow keys to gray
     
-    console.log('Updating keyboard colors for:', guess); // Remove this line
+    if (!guess || !results || results.length !== guess.length) return;
+
+    const rank = { absent: 0, present: 1, correct: 2 };
+    const bestForLetter = {};
+
+    for (let i = 0; i < guess.length; i++) {
+        const letter = guess[i].toUpperCase();
+        const state  = results[i];
+
+        if (!bestForLetter[letter] || rank[state] > rank[bestForLetter[letter]]) {
+            bestForLetter[letter] = state;
+        }
+    }
+
+    Object.keys(bestForLetter).forEach(letter => {
+        updateKeyboardKey(letter, bestForLetter[letter]);
+    });
 }
 
 /**
