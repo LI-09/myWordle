@@ -25,7 +25,7 @@
  */
 function initializeGame() {
     // TODO: Reset game state variables
-    currentWord = '';  // Set this to a random word
+    currentWord = WordleWords.getRandomWord().toUpperCase();
     currentGuess = '';
     currentRow = 0;
     gameOver = false;
@@ -57,6 +57,7 @@ function initializeGame() {
  * - Handle BACKSPACE for letter deletion
  * - Update the display when letters are added/removed
  */
+
 function handleKeyPress(key) {
     // TODO: Check if game is over - if so, return early
     
@@ -72,47 +73,48 @@ function handleKeyPress(key) {
     // TODO: Handle BACKSPACE key  
     // HINT: Check if there are letters to remove
     // HINT: Clear the tile display and remove from currentGuess
-    
-    // If game is over, ignore input
     if (gameOver || currentRow >= MAX_GUESSES) return;
 
     const K = (key || '').toUpperCase();
 
-    if (/^[A-Z]$/.test(K)) {
-        if (currentGuess.length < WORD_LENGTH) {
-            const col = currentGuess.length;
-            currentGuess += K;
-
-            const tile = getTile(currentRow, col);
-            updateTileDisplay(tile, K);
-        }
-        return;
-    }
-
-
-    if (K === 'ENTER') {
-        if (isGuessComplete()) {
-            submitGuess();
-        } else {
+    // Enforce input rules
+    if (!validateInput(K, currentGuess)) {
+        // Gentle feedback when Enter is pressed too early
+        if (K === 'ENTER' && currentGuess.length < WORD_LENGTH) {
             showMessage('Not enough letters', 'error');
             shakeRow(currentRow);
         }
         return;
     }
 
+    // LETTER KEYS
+    if (/^[A-Z]$/.test(K)) {
+        const col = currentGuess.length;
+        currentGuess += K;
 
+        const tile = getTile(currentRow, col);
+        updateTileDisplay(tile, K);
+        return;
+    }
+
+    // ENTER
+    if (K === 'ENTER') {
+        submitGuess();
+        return;
+    }
+
+    // BACKSPACE
     if (K === 'BACKSPACE') {
-        if (currentGuess.length > 0) {
-            const col = currentGuess.length - 1;
-            currentGuess = currentGuess.slice(0, -1);
+        const col = currentGuess.length - 1;
+        currentGuess = currentGuess.slice(0, -1);
 
-            const tile = getTile(currentRow, col);
-            updateTileDisplay(tile, '');      
-            setTileState(tile, '');           
-        }
+        const tile = getTile(currentRow, col);
+        updateTileDisplay(tile, '');
+        setTileState(tile, '');
         return;
     }
 }
+
 
 /**
  * Submit and process a complete guess
@@ -268,7 +270,19 @@ function updateGameState(isCorrect) {
     // TODO: Handle lose condition  
     // HINT: Check if currentRow >= MAX_GUESSES - 1
     
-    console.log('Game state updated. Correct:', isCorrect); // Remove this line
+    if (isCorrect) {
+        gameWon = true;
+        gameOver = true;
+        showEndGameModal(true, currentWord);
+        return;
+    }
+
+    if (currentRow >= MAX_GUESSES - 1) {
+        gameOver = true;
+        gameWon = false;
+        showEndGameModal(false, currentWord);
+        return;
+    }    
 }
 
 // ========================================
@@ -328,7 +342,12 @@ function processRowReveal(rowIndex, results) {
     // TODO: If all correct, trigger celebration
     // HINT: Use celebrateRow() function
     
-    console.log('Processing row reveal for row:', rowIndex); // Remove this line
+    if (Array.isArray(results) && results.length === WORD_LENGTH) {
+        const allCorrect = results.every(r => r === 'correct');
+        if (allCorrect) {
+            celebrateRow(rowIndex);
+        }
+    }
 }
 
 /**
@@ -351,7 +370,9 @@ function showEndGameModal(won, targetWord) {
     // TODO: Show the modal
     // HINT: Use showModal() function
     
-    console.log('Showing end game modal. Won:', won, 'Word:', targetWord); // Remove this line
+    const guessesUsed = won ? (currentRow + 1) : 0;
+    updateStats(won);
+    showModal(won, targetWord.toUpperCase(), guessesUsed);
 }
 
 /**
@@ -376,8 +397,22 @@ function validateInput(key, currentGuess) {
     // TODO: Handle BACKSPACE key
     // HINT: Check if currentGuess.length > 0
     
-    console.log('Validating input:', key); // Remove this line
-    return true; // Replace with actual validation logic
+    
+    if (gameOver) return false;
+
+    if (/^[A-Z]$/.test(key)) {
+        return currentGuess.length < WORD_LENGTH;
+    }
+
+    if (key === 'ENTER') {
+        return currentGuess.length === WORD_LENGTH;
+    }
+
+    if (key === 'BACKSPACE') {
+        return currentGuess.length > 0;
+    }
+
+    return false;
 }
 
 // ========================================
@@ -388,5 +423,15 @@ function validateInput(key, currentGuess) {
 // console.log('Current word:', currentWord);
 // console.log('Current guess:', currentGuess);
 // console.log('Current row:', currentRow);
+// Debug helper (REMOVE before submission)
+//window.debug = window.debug || {};
+//window.debug.setWord = (w) => { 
+//    initializeGame(); 
+//    currentWord = w.toUpperCase(); 
+//   console.log('Target set to:', currentWord); 
+//};
+
+
+
 
 console.log('Student implementation template loaded. Start implementing the functions above!'); 
