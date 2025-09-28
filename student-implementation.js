@@ -40,7 +40,11 @@ function initializeGame() {
     // TODO: Hide any messages
     // HINT: Use hideModal() and ensure message element is hidden
     
-    console.log('Game initialized!'); // Remove this line when implementing
+    resetBoard();
+
+    hideModal();
+    messageElement.textContent = '';
+    messageElement.classList.add('hidden');
 }
 
 /**
@@ -69,7 +73,45 @@ function handleKeyPress(key) {
     // HINT: Check if there are letters to remove
     // HINT: Clear the tile display and remove from currentGuess
     
-    console.log('Key pressed:', key); // Remove this line when implementing
+    // If game is over, ignore input
+    if (gameOver || currentRow >= MAX_GUESSES) return;
+
+    const K = (key || '').toUpperCase();
+
+    if (/^[A-Z]$/.test(K)) {
+        if (currentGuess.length < WORD_LENGTH) {
+            const col = currentGuess.length;
+            currentGuess += K;
+
+            const tile = getTile(currentRow, col);
+            updateTileDisplay(tile, K);
+        }
+        return;
+    }
+
+
+    if (K === 'ENTER') {
+        if (isGuessComplete()) {
+            submitGuess();
+        } else {
+            showMessage('Not enough letters', 'error');
+            shakeRow(currentRow);
+        }
+        return;
+    }
+
+
+    if (K === 'BACKSPACE') {
+        if (currentGuess.length > 0) {
+            const col = currentGuess.length - 1;
+            currentGuess = currentGuess.slice(0, -1);
+
+            const tile = getTile(currentRow, col);
+            updateTileDisplay(tile, '');      
+            setTileState(tile, '');           
+        }
+        return;
+    }
 }
 
 /**
@@ -108,8 +150,53 @@ function submitGuess() {
     
     // TODO: Move to next row if game continues
     // HINT: Increment currentRow and reset currentGuess
+
+    if (!isGuessComplete()) {
+        showMessage('Not enough letters', 'error');
+        shakeRow(currentRow);
+        return;
+    }
+
+    const guess = getCurrentGuess();  
+    const target = getTargetWord();   
+
+
+    if (!WordleWords.isValidWord(guess)) {
+        showMessage('Not in word list', 'error');
+        shakeRow(currentRow);
+        return;
+    }
+
+ 
+    const results = [];
+    for (let i = 0; i < WORD_LENGTH; i++) {
+        const letter = guess[i];
+        const status = checkLetter(letter, i, target);
+        results.push(status);
+    }
+
+
+    for (let i = 0; i < WORD_LENGTH; i++) {
+        const tile = getTile(currentRow, i);
+        setTileState(tile, results[i]);
+    }
+
+
+    updateKeyboardColors(guess, results);
+
+
+    processRowReveal(currentRow, results);
+
+
+    const isCorrect = (guess === target);
+    updateGameState(isCorrect);
+
+
+    if (!gameOver) {
+        currentRow += 1;
+        currentGuess = '';
+    }    
     
-    console.log('Guess submitted:', currentGuess); // Remove this line when implementing
 }
 
 /**
